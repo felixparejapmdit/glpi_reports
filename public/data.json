@@ -1,0 +1,40 @@
+[
+  {
+    "team": "Support",
+    "members": [
+      {
+        "name": "John Doe",
+        "openTickets": 5,
+        "closedTickets": 15,
+        "totalTasks": 20,
+        "lastUpdate": "2024-09-10"
+      },
+      {
+        "name": "Jane Smith",
+        "openTickets": 2,
+        "closedTickets": 10,
+        "totalTasks": 12,
+        "lastUpdate": "2024-09-01"
+      }
+    ]
+  },
+  {
+    "team": "Development",
+    "members": [
+      {
+        "name": "Alice Brown",
+        "openTickets": 3,
+        "closedTickets": 9,
+        "totalTasks": 12,
+        "lastUpdate": "2024-09-05"
+      },
+      {
+        "name": "Bob Johnson",
+        "openTickets": 1,
+        "closedTickets": 8,
+        "totalTasks": 9,
+        "lastUpdate": "2024-08-30"
+      }
+    ]
+  }
+]

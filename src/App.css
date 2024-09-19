@@ -1,0 +1,96 @@
+body {
+  background-color: #f0f4f8;
+  font-family: "Arial", sans-serif;
+}
+
+.app-container {
+  margin: 0 auto;
+  max-width: 1000px;
+  padding: 20px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  text-align: center;
+  font-size: 2.5rem;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.filter-container {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.filter-container label {
+  font-size: 1.2rem;
+  color: #0073e6;
+}
+
+select {
+  padding: 10px;
+  font-size: 1rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.report-table {
+  width: 100%;
+  margin-top: 20px;
+  border-collapse: collapse;
+  font-size: 1.1rem;
+}
+
+.report-table th,
+.report-table td {
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  cursor: pointer;
+}
+
+.report-table th {
+  background-color: #0073e6;
+  color: white;
+  text-align: left;
+}
+
+.report-table tr:hover {
+  background-color: #f1f1f1;
+}
+
+.chart-container {
+  margin-top: 40px;
+  text-align: center;
+}
+
+.table-row {
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.table-row:hover {
+  background-color: #f9f9f9;
+  transform: scale(1.02);
+}
+
+.pagination {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.pagination button {
+  padding: 10px 20px;
+  margin: 0 5px;
+  border: none;
+  background-color: #0073e6;
+  color: white;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.pagination button.active {
+  background-color: #005bb5;
+}
