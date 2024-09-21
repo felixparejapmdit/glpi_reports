@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  # Your application service (assuming it's named 'app')
+  app:
+    build: .
+    container_name: glpi-weeklyreports-app
+    ports:
+      - "3000:3000" # Change port if necessary
+    volumes:
+      - .:/app
+    restart: always # Ensures the app restarts on failure
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+
+  # Watchtower service for auto-updating the app
+  watchtower:
+    container_name: watchtower
+    image: containrrr/watchtower:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_POLL_INTERVAL=300 # Check for updates every 5 minutes
+    restart: always
