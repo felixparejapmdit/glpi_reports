@@ -1,325 +1,428 @@
 import React, { useState, useEffect } from "react";
-import { fetchGroups, fetchTicketsByUserId } from "../services/glpiService";
+import {
+  fetchGroups,
+  fetchTicketsByUserId,
+  fetchTicketTasksByUserId,
+} from "../services/glpiService";
 import "./PAR.css";
+import DOMPurify from "dompurify";
 
 const PAR = () => {
   const [groups, setGroups] = useState([]);
-  const [tickets, setTickets] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [userStats, setUserStats] = useState({});
-  const [selectedGroup, setSelectedGroup] = useState(13); // Default group ID
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [userStats, setUserStats] = useState([]);
+  const [selectedGroup, setSelectedGroup] = useState("");
+  const [filterType, setFilterType] = useState("All");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [weekNumber, setWeekNumber] = useState(1);
+  const [month, setMonth] = useState("January");
+  const [year, setYear] = useState("2023");
   const [error, setError] = useState(null);
-  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
-  // Fetch initial data
+  // Fetch initial data for groups
   useEffect(() => {
-    async function loadData() {
+    const loadInitialData = async () => {
       try {
-        console.log("Fetching groups and categories...");
-        const responseGroups = await fetchGroups(26); // Replace with your actual entity_id
-        const groupData = responseGroups.items || [];
-        setGroups(groupData);
-        console.log("Groups fetched:", groupData);
+        const responseGroups = await fetchGroups(26);
+        setGroups(responseGroups.items || []);
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        setError(err);
+      }
+    };
 
-        const categoryResponse = await fetch(
-          "http://trg-itsm.1914inc.net:8080/itilcategory/?page=1&size=50"
-        );
-        const categoryData = await categoryResponse.json();
-        setCategories(categoryData.items || []);
-        console.log("Categories fetched:", categoryData.items);
+    loadInitialData();
+  }, []);
 
-        const users = {};
+  // Fetch user stats (tickets and tasks) when group is selected and apply filter
+  const fetchUserStats = async (groupId, filterCriteria = {}) => {
+    try {
+      const responseGroups = await fetchGroups(26);
+      const group = responseGroups.items.find(
+        (g) => g.id === parseInt(groupId)
+      );
+      if (!group || !group.group_users) return;
 
-        // Process each group and their users
-        for (let group of groupData) {
-          if (Array.isArray(group.group_users)) {
-            for (let groupUser of group.group_users) {
-              const userId = groupUser.user.id;
-              if (!users[userId]) {
-                users[userId] = {
-                  name: `${groupUser.user.first_name} ${groupUser.user.last_name}`,
-                  totalManHours: 0,
-                  groupId: group.id,
-                  category: groupUser.user.category,
-                };
-              }
-            }
-          }
-        }
+      const users = group.group_users.map((groupUser) => ({
+        id: groupUser.user.id,
+        name: `${groupUser.user.first_name} ${groupUser.user.last_name}`,
+        totalManHours: 0,
+        tickets: [],
+        tasks: [],
+      }));
 
-        // Calculate man-hours for users
-        for (const userId in users) {
-          const userTickets = await fetchTicketsByUserId(userId);
-          const ticketsWithDuration = userTickets.map((ticket) => {
+      // Efficient fetching of user tickets and tasks using Promise.all
+      const updatedUsers = await Promise.all(
+        users.map(async (user) => {
+          const [userTickets, userTasks] = await Promise.all([
+            fetchTicketsByUserId(user.id),
+            fetchTicketTasksByUserId(user.id),
+          ]);
+
+          // Filter the tickets by the selected filter (Date, Weekly, Monthly, Yearly)
+          const filteredTickets = applyFilter(userTickets, filterCriteria);
+
+          user.tickets = filteredTickets;
+          user.tasks = userTasks;
+
+          // Calculate total man hours from tickets and tasks
+          const totalTicketHours = filteredTickets.reduce((acc, ticket) => {
             if (
-              ticket.additional_field &&
-              ticket.additional_field.start_time &&
-              ticket.additional_field.end_time
+              ticket.additional_field?.start_time &&
+              ticket.additional_field?.end_time
             ) {
               const duration = calculateDuration(
                 ticket.additional_field.start_time,
                 ticket.additional_field.end_time
               );
-              return { ...ticket, duration };
+              return acc + duration;
             }
-            return ticket;
-          });
+            return acc;
+          }, 0);
 
-          const totalManHours = ticketsWithDuration.reduce(
-            (sum, ticket) => sum + (ticket.duration || 0),
+          const totalTaskHours = userTasks.reduce(
+            (acc, task) => acc + task.duration_hr,
             0
           );
 
-          users[userId].totalManHours = totalManHours;
-        }
+          return { ...user, totalManHours: totalTicketHours + totalTaskHours };
+        })
+      );
 
-        setUserStats(users);
-        console.log("User stats calculated:", users);
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        setError(err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadData();
-  }, []);
-
-  const handleUserClick = async (userId) => {
-    setSelectedUserId(userId);
-    try {
-      const userTickets = await fetchTicketsByUserId(userId);
-      const ticketsWithDuration = userTickets.map((ticket) => {
-        if (
-          ticket.additional_field &&
-          ticket.additional_field.start_time &&
-          ticket.additional_field.end_time
-        ) {
-          const duration = calculateDuration(
-            ticket.additional_field.start_time,
-            ticket.additional_field.end_time
-          );
-          return { ...ticket, duration };
-        }
-        return ticket;
-      });
-
-      setTickets(ticketsWithDuration);
-      console.log("Tickets for user:", ticketsWithDuration);
-    } catch (error) {
-      console.error("Error fetching tickets:", error);
-      setError(error);
+      setUserStats(updatedUsers);
+      setCurrentPage(1); // Reset to the first page after data fetch
+    } catch (err) {
+      console.error("Error fetching user stats:", err);
+      setError(err);
     }
   };
 
+  // Apply filtering logic based on filterType
+  const applyFilter = (tickets, filterCriteria) => {
+    const { startDate, endDate, weekNumber, month, year } = filterCriteria;
+    const now = new Date();
+
+    if (filterType === "Date" && startDate && endDate) {
+      return tickets.filter((ticket) => {
+        const ticketDate = new Date(ticket.open_date);
+        return (
+          ticketDate >= new Date(startDate) && ticketDate <= new Date(endDate)
+        );
+      });
+    } else if (filterType === "Weekly") {
+      const yearStart = new Date(now.getFullYear(), 0, 1);
+      const weekStartDate = new Date(yearStart.setDate(weekNumber * 7));
+      const weekEndDate = new Date(
+        weekStartDate.getTime() + 6 * 24 * 60 * 60 * 1000
+      );
+      return tickets.filter((ticket) => {
+        const ticketDate = new Date(ticket.open_date);
+        return ticketDate >= weekStartDate && ticketDate <= weekEndDate;
+      });
+    } else if (filterType === "Monthly") {
+      const monthIndex = new Date(
+        `${month} 1, ${now.getFullYear()}`
+      ).getMonth();
+      return tickets.filter((ticket) => {
+        const ticketDate = new Date(ticket.open_date);
+        return (
+          ticketDate.getMonth() === monthIndex &&
+          ticketDate.getFullYear() === now.getFullYear()
+        );
+      });
+    } else if (filterType === "Yearly") {
+      return tickets.filter((ticket) => {
+        const ticketDate = new Date(ticket.open_date);
+        return ticketDate.getFullYear() === parseInt(year);
+      });
+    }
+    // Default filter (All)
+    return tickets;
+  };
+
+  // Calculate duration of tickets
   const calculateDuration = (startTime, endTime) => {
     if (!startTime || !endTime) return 0;
     const start = new Date(startTime);
     const end = new Date(endTime);
-    return (end - start) / (1000 * 60 * 60); // Convert milliseconds to hours
+    return (end - start) / (1000 * 60 * 60); // Convert to hours
   };
 
-  const calculateStats = () => {
-    let overallTime = 0;
-    let overallManHours = 0;
+  // Pagination logic: Calculate paginated user stats for the current page
+  const paginatedUserStats = userStats.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
-    Object.keys(userStats).forEach((userId) => {
-      overallTime += userStats[userId].totalManHours;
-      overallManHours += userStats[userId].totalManHours;
+  // Calculate the total number of pages
+  const totalPages = Math.ceil(userStats.length / pageSize);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  };
+
+  // Function to strip HTML tags and decode HTML entities
+  const stripHtmlTags = (html) => {
+    const cleanHtml = DOMPurify.sanitize(html, {
+      USE_PROFILES: { html: true },
     });
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = cleanHtml;
 
-    return { overallTime, overallManHours };
+    // Extract text from the element, which decodes the entities
+    const decodedText = tempDiv.textContent || tempDiv.innerText || "";
+
+    return decodedText.replace(/<\/?[^>]+(>|$)/g, "");
   };
 
-  const { overallTime, overallManHours } = calculateStats();
+  // Function to get tasks related to a specific ticket and decode HTML entities
+  const getTasksForTicket = (ticketId, tasks) => {
+    const relatedTasks = tasks.filter((task) => task.ticket_id === ticketId);
+    return relatedTasks.length > 0
+      ? relatedTasks.map((task, taskIndex) => (
+          <div key={taskIndex}>{stripHtmlTags(task.content) || "-"}</div>
+        ))
+      : "-";
+  };
 
-  if (loading) return <div>Loading...</div>;
+  // Function to get man hours for tickets or tasks
+  const getManHoursForTicketOrTask = (ticket, tasks) => {
+    const relatedTasks = tasks.filter((task) => task.ticket_id === ticket.id);
+    if (relatedTasks.length > 0) {
+      return (
+        relatedTasks
+          .reduce((acc, task) => acc + task.duration_hr, 0)
+          .toFixed(2) + " hours"
+      );
+    } else {
+      const duration = calculateDuration(
+        ticket.additional_field?.start_time,
+        ticket.additional_field?.end_time
+      );
+      return duration.toFixed(2) + " hours";
+    }
+  };
+
+  const renderFilterFields = () => {
+    if (filterType === "Date") {
+      return (
+        <>
+          <label htmlFor="start-date">Start Date:</label>
+          <input
+            type="date"
+            id="start-date"
+            value={startDate}
+            onChange={(e) => {
+              setStartDate(e.target.value);
+              fetchUserStats(selectedGroup, {
+                startDate: e.target.value,
+                endDate,
+              });
+            }}
+          />
+
+          <label htmlFor="end-date">End Date:</label>
+          <input
+            type="date"
+            id="end-date"
+            value={endDate}
+            onChange={(e) => {
+              setEndDate(e.target.value);
+              fetchUserStats(selectedGroup, {
+                startDate,
+                endDate: e.target.value,
+              });
+            }}
+          />
+        </>
+      );
+    } else if (filterType === "Weekly") {
+      return (
+        <>
+          <label htmlFor="week-number">Week Number:</label>
+          <select
+            id="week-number"
+            value={weekNumber}
+            onChange={(e) => {
+              setWeekNumber(e.target.value);
+              fetchUserStats(selectedGroup, { weekNumber: e.target.value });
+            }}
+          >
+            {Array.from({ length: 52 }, (_, i) => i + 1).map((week) => (
+              <option key={week} value={week}>
+                Week {week}
+              </option>
+            ))}
+          </select>
+        </>
+      );
+    } else if (filterType === "Monthly") {
+      return (
+        <>
+          <label htmlFor="month-select">Month:</label>
+          <select
+            id="month-select"
+            value={month}
+            onChange={(e) => {
+              setMonth(e.target.value);
+              fetchUserStats(selectedGroup, { month: e.target.value });
+            }}
+          >
+            {[
+              "January",
+              "February",
+              "March",
+              "April",
+              "May",
+              "June",
+              "July",
+              "August",
+              "September",
+              "October",
+              "November",
+              "December",
+            ].map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </select>
+        </>
+      );
+    } else if (filterType === "Yearly") {
+      return (
+        <>
+          <label htmlFor="year-select">Year:</label>
+          <select
+            id="year-select"
+            value={year}
+            onChange={(e) => {
+              setYear(e.target.value);
+              fetchUserStats(selectedGroup, { year: e.target.value });
+            }}
+          >
+            {["2023", "2024", "2025", "2026", "2027", "2028", "2029"].map(
+              (y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              )
+            )}
+          </select>
+        </>
+      );
+    }
+    return null;
+  };
+
   if (error) return <div>Error: {error.message}</div>;
-
-  const userStatsData = Object.keys(userStats).map((userId) => ({
-    name: userStats[userId].name,
-    manHours: userStats[userId].totalManHours.toFixed(2),
-  }));
-
-  const groupStatsData = Object.keys(groups).map((groupId) => {
-    const groupManHours = Object.keys(userStats).reduce((acc, userId) => {
-      if (userStats[userId].groupId === groupId) {
-        acc += userStats[userId].totalManHours;
-      }
-      return acc;
-    }, 0);
-    return {
-      name: groups[groupId].name,
-      manHours: groupManHours.toFixed(2),
-    };
-  });
 
   return (
     <div className="dashboard">
       <h1>Post Activity Report</h1>
 
-      <div className="searchbar">
-        <label htmlFor="category-select">Select Category:</label>
-        <select
-          id="category-select"
-          onChange={(e) => setSelectedCategory(e.target.value)}
-          value={selectedCategory}
-        >
-          <option value="" disabled>
-            Select a category
-          </option>
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-
-        <label htmlFor="start-date">Start Date:</label>
-        <input
-          type="date"
-          id="start-date"
-          value={startDate}
-          onChange={(e) => setStartDate(e.target.value)}
-        />
-
-        <label htmlFor="end-date">End Date:</label>
-        <input
-          type="date"
-          id="end-date"
-          value={endDate}
-          onChange={(e) => setEndDate(e.target.value)}
-        />
-      </div>
-
-      <div className="stats">
-        <h2>Overall Stats</h2>
-        <p>Overall Man Hours: {overallManHours.toFixed(2)} hours</p>
-      </div>
-
       <div className="user-stats">
-        <h2>TRG Personnel Stats</h2>
-
-        <label htmlFor="group-select">Select Group:</label>
-        <select
-          id="group-select"
-          onChange={(e) => setSelectedGroup(e.target.value)}
-          value={selectedGroup}
-        >
-          <option value="" disabled>
-            Select a group
-          </option>
-          {groups.map((group) => (
-            <option key={group.id} value={group.id}>
-              {group.name}
+        <div className="filterby">
+          <label htmlFor="group-select">Select team:</label>
+          <select
+            id="group-select"
+            onChange={(e) => {
+              setSelectedGroup(e.target.value);
+              fetchUserStats(e.target.value);
+            }}
+            value={selectedGroup}
+          >
+            <option value="" disabled>
+              Select a team
             </option>
-          ))}
-        </select>
+            {groups.map((group) => (
+              <option key={group.id} value={group.id}>
+                {group.name}
+              </option>
+            ))}
+          </select>
+
+          <label htmlFor="filter-type">Filter By:</label>
+          <select
+            id="filter-type"
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+          >
+            <option value="All">All</option>
+            <option value="Date">Date</option>
+            <option value="Weekly">Weekly</option>
+            <option value="Monthly">Monthly</option>
+            <option value="Yearly">Yearly</option>
+          </select>
+
+          {renderFilterFields()}
+        </div>
 
         {selectedGroup && (
           <div className="user-details">
-            {Object.keys(userStats).length > 0 ? (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Username/Fullname</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Total Man Hours</th>
-                    <th>Category</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.keys(userStats)
-                    .filter(
-                      (userId) =>
-                        userStats[userId].groupId ===
-                          parseInt(selectedGroup, 10) &&
-                        (selectedCategory === "" ||
-                          userStats[userId].category === selectedCategory)
-                    )
-                    .map((userId) => (
-                      <tr
-                        key={userId}
-                        onClick={() => handleUserClick(userId)}
-                        style={{
-                          cursor: "pointer",
-                          backgroundColor:
-                            selectedUserId === userId
-                              ? "#f0f0f0"
-                              : "transparent",
-                        }}
-                      >
-                        <td>{userStats[userId].name}</td>
-
+            <table>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Fullname</th>
+                  <th>Tickets</th>
+                  <th>Tasks</th>
+                  <th>Man Hours</th>
+                  <th>Total Man Hours</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedUserStats.map((user, index) => (
+                  <React.Fragment key={index}>
+                    {user.tickets.map((ticket, ticketIndex) => (
+                      <tr key={ticketIndex}>
+                        {ticketIndex === 0 && (
+                          <>
+                            <td rowSpan={user.tickets.length}>
+                              {(currentPage - 1) * pageSize + index + 1}
+                            </td>
+                            <td rowSpan={user.tickets.length}>{user.name}</td>
+                          </>
+                        )}
+                        <td>{ticket.name}</td>
+                        <td>{getTasksForTicket(ticket.id, user.tasks)}</td>
                         <td>
-                          {new Date(
-                            userStats[userId].startDate
-                          ).toLocaleDateString()}
+                          {getManHoursForTicketOrTask(ticket, user.tasks)}
                         </td>
-                        <td>
-                          {new Date(
-                            userStats[userId].endDate
-                          ).toLocaleDateString()}
-                        </td>
-                        <td
-                          style={{
-                            color:
-                              userStats[userId].totalManHours.toFixed(2) ===
-                              "0.00"
-                                ? "red"
-                                : "inherit",
-                          }}
-                        >
-                          {userStats[userId].totalManHours.toFixed(2)} hours
-                        </td>
-                        <td>{userStats[userId].category || "N/A"}</td>
+                        {ticketIndex === 0 && (
+                          <td rowSpan={user.tickets.length}>
+                            {user.totalManHours.toFixed(2)} hours
+                          </td>
+                        )}
                       </tr>
                     ))}
-                </tbody>
-              </table>
-            ) : (
-              <p>No user stats available.</p>
-            )}
-          </div>
-        )}
-      </div>
+                  </React.Fragment>
+                ))}
+              </tbody>
+            </table>
 
-      <div className="tickets">
-        <h2>Tickets</h2>
-        {selectedUserId ? (
-          tickets.length > 0 ? (
-            tickets.map((ticket) => (
-              <div key={ticket.id} className="ticket">
-                <h3>Ticket #{ticket.id}</h3>
-                <p>{ticket.name}</p>
-                <p>Duration: {ticket.duration || 0} hours</p>
-                <p>Content: {ticket.content}</p>
-                <div>
-                  {ticket.pictures && ticket.pictures.length > 0 ? (
-                    ticket.pictures.map((pic, index) => (
-                      <img
-                        key={index}
-                        src={pic.url}
-                        alt={`Ticket ${ticket.id}`}
-                      />
-                    ))
-                  ) : (
-                    <p>No pictures available.</p>
-                  )}
-                </div>
-              </div>
-            ))
-          ) : (
-            <p>No tickets available for this user.</p>
-          )
-        ) : (
-          <p>Select a user to view their tickets.</p>
+            {/* Pagination Controls */}
+            <div className="pagination">
+              <button onClick={handlePrevPage} disabled={currentPage === 1}>
+                Previous
+              </button>
+              <span>
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={handleNextPage}
+                disabled={currentPage === totalPages}
+              >
+                Next
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>

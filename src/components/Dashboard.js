@@ -1,14 +1,40 @@
 import React, { useState } from "react";
 import "./Dashboard.css";
+import { fetchTicketStats, setAuthToken } from "../services/glpiService";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { setAuthToken } from "../services/glpiService";
+import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
+import "react-circular-progressbar/dist/styles.css";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faExclamationCircle,
+  faUsers,
+  faCalendarCheck,
+  faPauseCircle,
+  faCheckSquare,
+  faArchive,
+  faChartLine,
+  faFileAlt,
+  faTicketAlt,
+} from "@fortawesome/free-solid-svg-icons";
 
 const Dashboard = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [error, setError] = useState(null);
+  const [ticketStats, setTicketStats] = useState({
+    new: 0,
+    assigned: 0,
+    planned: 0,
+    pending: 0,
+    solved: 0,
+    closed: 0,
+    notSolved: 0,
+    total: 0,
+  });
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   // Handle login submission
@@ -19,6 +45,8 @@ const Dashboard = () => {
     data.append("password", password);
 
     try {
+      setIsLoading(true); // Start loading
+      setLoadingProgress(20); // Set initial progress
       const response = await axios.post(
         "http://trg-itsm.1914inc.net:8080/auth/login",
         data,
@@ -30,47 +58,152 @@ const Dashboard = () => {
         }
       );
 
-      console.log("Login Response:", response.data);
-
       const authToken = response.data.access_token;
       if (authToken) {
         setAuthToken(authToken);
         setIsLoggedIn(true);
+        await fetchTicketData(); // Fetch ticket data after login
       } else {
         setError("Login failed. No token received.");
+        setIsLoading(false);
       }
     } catch (error) {
       setError("Login failed. Please check your credentials.");
+      setIsLoading(false);
       console.error("Login error:", error);
     }
   };
 
-  return (
-    <div className="dashboard">
-      <h1>GLPI Reports</h1>
-      <div className="quick-actions">
-        <div
-          className="action-card"
-          onClick={() => navigate("/weekly-reports")}
-        >
-          <div className="action-icon">
-            <i className="fas fa-chart-line"></i>
-          </div>
-          <div className="action-content">
-            <h3>Weekly Reports</h3>
-          </div>
-        </div>
-        <div className="action-card" onClick={() => navigate("/par-reports")}>
-          <div className="action-icon">
-            <i className="fas fa-file-alt"></i>
-          </div>
-          <div className="action-content">
-            <h3>PAR Reports</h3>
-          </div>
-        </div>
-      </div>
+  // Fetch ticket stats after login
+  const fetchTicketData = async () => {
+    try {
+      setLoadingProgress(40); // Update progress at the start of the fetch
+      const stats = await fetchTicketStats();
 
-      {/* Only show login form when not logged in */}
+      if (stats) {
+        setTicketStats(stats);
+        setLoadingProgress(70); // Update progress after data is fetched
+        // Simulate some processing delay for the last step
+        setTimeout(() => {
+          setLoadingProgress(100); // Set progress to 100% after processing
+          setIsLoading(false); // Stop loading
+        }, 500); // Adjust the delay as needed
+      }
+    } catch (error) {
+      console.error("Error fetching ticket stats:", error);
+      setLoadingProgress(100); // Ensure it reaches 100% even if there's an error
+      setIsLoading(false); // Stop loading on error
+    }
+  };
+
+  // Hide the loading bar when progress reaches 100%
+  const loadingBarStyle = {
+    display: loadingProgress === 100 ? "none" : "block",
+  };
+
+  return (
+    <div className="dashboard-content">
+      {/* Ticket Stats Section */}
+      {isLoggedIn && (
+        <>
+          {/* Centered GLPI Reports Title */}
+          <h1 className="centered-title">Dashboard</h1>
+
+          <div className="main-content">
+            <div className="ticket-stats">
+              <div className="ticket-card not-solved">
+                <FontAwesomeIcon
+                  icon={faExclamationCircle}
+                  className="ticket-icon"
+                />
+                <span className="ticket-count">{ticketStats.notSolved}</span>
+                <span>Not Solved</span>
+              </div>
+              <div className="ticket-card assigned">
+                <FontAwesomeIcon icon={faUsers} className="ticket-icon" />
+                <span className="ticket-count">{ticketStats.assigned}</span>
+                <span>Assigned tickets</span>
+              </div>
+              <div className="ticket-card planned">
+                <FontAwesomeIcon
+                  icon={faCalendarCheck}
+                  className="ticket-icon"
+                />
+                <span className="ticket-count">{ticketStats.planned}</span>
+                <span>Planned tickets</span>
+              </div>
+              <div className="ticket-card pending">
+                <FontAwesomeIcon icon={faPauseCircle} className="ticket-icon" />
+                <span className="ticket-count">{ticketStats.pending}</span>
+                <span>Pending tickets</span>
+              </div>
+              <div className="ticket-card solved">
+                <FontAwesomeIcon icon={faCheckSquare} className="ticket-icon" />
+                <span className="ticket-count">{ticketStats.solved}</span>
+                <span>Solved tickets</span>
+              </div>
+              <div className="ticket-card closed">
+                <FontAwesomeIcon icon={faArchive} className="ticket-icon" />
+                <span className="ticket-count">{ticketStats.closed}</span>
+                <span>Closed tickets</span>
+              </div>
+              <div className="ticket-card total">
+                <FontAwesomeIcon
+                  icon={faExclamationCircle}
+                  className="ticket-icon"
+                />
+                <span className="ticket-count">{ticketStats.total}</span>
+                <span>Total tickets</span>
+              </div>
+            </div>
+
+            <div className="quick-actions">
+              <h1 className="centered-title">Quick Actions</h1>
+              <div
+                className="action-card"
+                onClick={() => navigate("/weekly-reports")}
+              >
+                <div className="action-icon">
+                  <FontAwesomeIcon icon={faChartLine} />
+                </div>
+                <div className="action-content">
+                  <h3>GLPI Reports</h3>
+                </div>
+              </div>
+              <div
+                className="action-card"
+                onClick={() => navigate("/par-reports")}
+              >
+                <div className="action-icon">
+                  <FontAwesomeIcon icon={faFileAlt} />
+                </div>
+                <div className="action-content">
+                  <h3>PAR Reports</h3>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Loading Spinner */}
+      {isLoading && (
+        <div className="loading-container">
+          <div className="loading-bar" style={loadingBarStyle}>
+            <CircularProgressbar
+              value={loadingProgress}
+              text={`${loadingProgress}%`}
+              styles={buildStyles({
+                textColor: "#fff",
+                pathColor: "#00aaff",
+                trailColor: "#d6d6d6",
+              })}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Login Wrapper */}
       {!isLoggedIn && (
         <div className="login-wrapper">
           <div className="login-container">
