@@ -1,0 +1,29 @@
+.ticket-reports {
+  margin: 20px;
+}
+
+.ticket-reports table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.ticket-reports th,
+.ticket-reports td {
+  padding: 10px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.ticket-reports th {
+  background-color: #f4f4f4;
+  cursor: pointer;
+}
+
+.ticket-reports th:hover {
+  background-color: #e0e0e0;
+}
+
+.ticket-reports tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
