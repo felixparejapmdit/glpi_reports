@@ -1,29 +1,247 @@
+/* Main container for ticket reports */
 .ticket-reports {
   margin: 20px;
+  padding: 20px;
+  background-color: #f9fafc;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
+/* Search input container */
+.search-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  padding: 12px;
+  width: 80%;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  font-size: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #007bff;
+  box-shadow: 0 0 8px rgba(0, 123, 255, 0.5);
+}
+
+/* Table styles */
 .ticket-reports table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 20px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 .ticket-reports th,
 .ticket-reports td {
-  padding: 10px;
+  padding: 15px;
   border: 1px solid #ddd;
   text-align: left;
+  font-size: 16px;
+  transition: background-color 0.3s ease;
 }
 
 .ticket-reports th {
-  background-color: #f4f4f4;
+  background-color: #007bff;
+  color: #fff;
+  font-weight: bold;
   cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .ticket-reports th:hover {
-  background-color: #e0e0e0;
+  background-color: #1d88fa;
+}
+
+.ticket-reports td {
+  color: #333;
 }
 
 .ticket-reports tr:nth-child(even) {
   background-color: #f9f9f9;
+}
+
+.ticket-reports tr:hover {
+  background-color: #f1f5f9;
+  transform: scale(1.01);
+  transition: all 0.3s ease-in-out;
+}
+
+/* Pagination styles */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.pagination button {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  margin: 0 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  font-size: 16px;
+}
+
+.pagination button:hover {
+  background-color: #1f69b3;
+  transform: translateY(-2px);
+}
+
+.pagination button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.pagination span {
+  font-size: 16px;
+  margin: 0 10px;
+  color: #555;
+}
+
+.pagination button:focus {
+  outline: none;
+}
+
+/* Slide-in panel styles */
+.slide-in-panel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: 70%;
+  height: 100vh;
+  background: linear-gradient(
+    to bottom,
+    #72c1ff,
+    #007bbf
+  ); /* Updated warm blue gradient */
+  box-shadow: -2px 0 12px rgba(0, 0, 0, 0.3);
+  padding: 30px;
+  z-index: 1000;
+  overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+  border-radius: 12px;
+}
+
+.slide-in-panel.open {
+  transform: translateX(0);
+}
+
+/* Panel header */
+.panel-header h2 {
+  font-size: 26px;
+  font-weight: bold;
+  padding: 10px 30px;
+  margin: 0;
+  color: white;
+  background-color: #0056a3;
+  border-radius: 8px;
+  text-align: center;
+  width: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Content inside the panel */
+.panel-content {
+  padding: 20px;
+  font-size: 18px;
+  color: #333;
+  line-height: 1.6;
+  background-color: #fcfcfc;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Task card styles */
+.task-card {
+  display: flex;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+
+.task-card:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+.task-image img {
+  max-width: 100px;
+  margin-right: 20px;
+  border-radius: 50%; /* Make images round */
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.task-details p {
+  margin: 5px 0;
+  font-size: 16px;
+  color: #444;
+}
+
+/* Section headers */
+h3 {
+  font-size: 22px;
+  font-weight: bold;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  background-color: #007bff;
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* General text styles */
+p {
+  font-size: 18px;
+  margin-bottom: 10px;
+  line-height: 1.8;
+  color: #333;
+}
+
+strong {
+  font-weight: bold;
+  color: #0056a3;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .slide-in-panel {
+    width: 90%;
+  }
+
+  .task-card {
+    flex-direction: column;
+  }
+
+  .task-image {
+    margin: 10px auto;
+  }
+
+  .task-details {
+    padding: 10px;
+  }
+
+  h3 {
+    font-size: 20px;
+  }
 }

@@ -65,6 +65,62 @@ export const fetchTicketsByUserId = async (userId, assignmentType = 2) => {
   }
 };
 
+// Fetch all tickets
+export const fetchTickets = async (page = 1, size = 50) => {
+  let allTickets = [];
+  try {
+    while (true) {
+      const response = await axios.get(`${API_URL}/ticket/`, {
+        params: {
+          page,
+          size,
+        },
+      });
+
+      if (response.status !== 200) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const tickets = response.data.items || [];
+      allTickets = [...allTickets, ...tickets];
+
+      if (tickets.length < size) {
+        break;
+      }
+
+      page++;
+    }
+
+    return allTickets;
+  } catch (error) {
+    console.error("Error fetching tickets:", error);
+    return [];
+  }
+};
+
+export const fetchTicketsWithTasks = async (ticketId) => {
+  try {
+    const response = await axios.get(`${API_URL}/ticketwithtasks/${ticketId}`);
+    const ticket = response.data; // Assuming response.data contains the ticket details
+
+    console.log("API Response:", response); // Debug the full response
+
+    // Check if the response contains the necessary fields
+    if (!ticket || !ticket.id) {
+      console.error("No ticket data found:", ticket); // Log for debugging
+      throw new Error("No ticket data found.");
+    }
+
+    // Check if the ticket has tasks, if not, default to an empty array
+    ticket.ticket_tasks = ticket.ticket_tasks || [];
+
+    return ticket;
+  } catch (error) {
+    console.error("Error fetching ticket with tasks:", error);
+    throw error;
+  }
+};
+
 // Fetch all ticket tasks by user ID
 export const fetchTicketTasksByUserId = async (userId) => {
   let allTasks = [];

@@ -181,6 +181,18 @@ const Dashboard = () => {
                   <h3>PAR Reports</h3>
                 </div>
               </div>
+
+              <div
+                className="action-card"
+                onClick={() => navigate("/ticket-reports")}
+              >
+                <div className="action-icon">
+                  <FontAwesomeIcon icon={faFileAlt} />
+                </div>
+                <div className="action-content">
+                  <h3>Ticket Reports</h3>
+                </div>
+              </div>
             </div>
           </div>
         </>
