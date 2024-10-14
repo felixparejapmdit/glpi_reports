@@ -259,6 +259,18 @@ const TicketReports = () => {
         </tbody>
       </table>
 
+      <div className="pagination">
+        <button onClick={handlePrevPage} disabled={currentPage === 1}>
+          Previous
+        </button>
+        <span>
+          Page {currentPage} of {totalPages}
+        </span>
+        <button onClick={handleNextPage} disabled={currentPage === totalPages}>
+          Next
+        </button>
+      </div>
+
       {selectedTicket && (
         <div
           className={`slide-in-panel ${selectedTicket ? "open" : ""}`}

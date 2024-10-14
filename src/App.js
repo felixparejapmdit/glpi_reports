@@ -5,6 +5,7 @@ import Dashboard from "./components/Dashboard"; // This will contain only the lo
 import WeeklyReports from "./components/WeeklyReports"; // New component for GLPI Reports
 import PAR from "./components/PAR"; // Component for Post Activity Report
 import TicketReports from "./components/TicketReports"; // New component for Ticket Reports
+import PVReports from "./components/PVReports"; // New component for Ticket Reports
 import Menubar from "./components/menubar"; // Menubar added for specific pages
 
 const App = () => {
@@ -14,7 +15,8 @@ const App = () => {
   const showMenubar =
     location.pathname === "/weekly-reports" ||
     location.pathname === "/par-reports" ||
-    location.pathname === "/ticket-reports"; // Include the TicketReports page
+    location.pathname === "/ticket-reports" || // Include the TicketReports page
+    location.pathname === "/pv-reports"; // Include the TicketReports page
 
   return (
     <>
@@ -33,6 +35,7 @@ const App = () => {
         {/* Route for the Ticket Reports */}
         <Route path="/ticket-reports" element={<TicketReports />} />{" "}
         {/* New Route */}
+        <Route path="/pv-reports" element={<PVReports />} />{" "}
       </Routes>
     </>
   );
