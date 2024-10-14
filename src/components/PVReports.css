@@ -1,6 +1,9 @@
 .pv-reports-container {
   margin: 20px;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  padding: 20px;
+  background-color: #f9fafc;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 h1 {
@@ -12,7 +15,7 @@ h1 {
 
 .dropdowns-container {
   display: flex;
-  justify-content: center;
+  gap: 20px;
   margin-bottom: 20px;
 }
 
@@ -28,10 +31,9 @@ h1 {
 
 .dropdown select {
   padding: 10px;
-  border-radius: 5px;
-  border: 2px solid #007bff;
   font-size: 16px;
-  transition: border-color 0.3s ease;
+  border-radius: 8px;
+  border: 1px solid #ddd;
 }
 
 .dropdown select:focus {
@@ -50,24 +52,20 @@ h2 {
   padding-bottom: 5px;
 }
 
-.team-cards {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
+.team-section {
   margin-top: 20px;
 }
 
 .task-card {
-  background-color: #f9fafc;
+  border: 1px solid #ddd;
+  border-radius: 8px;
   padding: 20px;
-  border-radius: 12px;
+  margin-bottom: 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
 .task-card:hover {
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
 h3 {
