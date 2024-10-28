@@ -64,6 +64,7 @@ const Dashboard = () => {
       if (authToken) {
         setAuthToken(authToken);
         setIsLoggedIn(true);
+        setUsername(username); // Set the username in context
         await fetchTicketData(); // Fetch ticket data after login
       } else {
         setError("Login failed. No token received.");
