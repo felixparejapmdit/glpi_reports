@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { UserContext } from "../UserContext"; // Import UserContext
 import "./Dashboard.css";
 import { fetchTicketStats, setAuthToken } from "../services/glpiService";
 import axios from "axios";
@@ -19,7 +20,8 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 const Dashboard = () => {
-  const [username, setUsername] = useState("");
+  const { setUsername } = useContext(UserContext); // Destructure setUsername from context
+  const [username, setUsernameInput] = useState(""); // Local state for username input
   const [password, setPassword] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [error, setError] = useState(null);

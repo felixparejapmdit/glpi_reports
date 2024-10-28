@@ -1,41 +1,43 @@
-import React from "react";
+// src/App.js
+import React, { useContext } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import "./App.css";
-import Dashboard from "./components/Dashboard"; // This will contain only the login form
-import WeeklyReports from "./components/WeeklyReports"; // New component for GLPI Reports
-import PAR from "./components/PAR"; // Component for Post Activity Report
-import TicketReports from "./components/TicketReports"; // New component for Ticket Reports
-import PVReports from "./components/PVReports"; // New component for Ticket Reports
-import Menubar from "./components/menubar"; // Menubar added for specific pages
+import Dashboard from "./components/Dashboard";
+import WeeklyReports from "./components/WeeklyReports";
+import PAR from "./components/PAR";
+import TicketReports from "./components/TicketReports";
+import PVReports from "./components/PVReports";
+import Menubar from "./components/menubar";
+import { UserContext } from "./UserContext"; // Import UserContext
 
 const App = () => {
-  const location = useLocation(); // Get the current route location
+  const location = useLocation();
+  const { username } = useContext(UserContext); // Use username from context
 
   // Conditionally display Menubar only on specific routes
   const showMenubar =
     location.pathname === "/weekly-reports" ||
     location.pathname === "/par-reports" ||
-    location.pathname === "/ticket-reports" || // Include the TicketReports page
-    location.pathname === "/pv-reports"; // Include the TicketReports page
+    location.pathname === "/ticket-reports" ||
+    location.pathname === "/pv-reports";
 
   return (
     <>
       {/* Conditionally render the Menubar based on the route */}
       {showMenubar && (
-        <Menubar profileName="Admin" onLogout={() => alert("Logged Out")} />
+        <Menubar
+          profileName={username || "Admin"}
+          onLogout={() => alert("Logged Out")}
+        />
       )}
 
       <Routes>
-        {/* Route for the login page */}
+        {/* Define your routes here */}
         <Route path="/" element={<Dashboard />} />
-        {/* Route for the Weekly Reports */}
         <Route path="/weekly-reports" element={<WeeklyReports />} />
-        {/* Route for the PAR */}
         <Route path="/par-reports" element={<PAR />} />
-        {/* Route for the Ticket Reports */}
-        <Route path="/ticket-reports" element={<TicketReports />} />{" "}
-        {/* New Route */}
-        <Route path="/pv-reports" element={<PVReports />} />{" "}
+        <Route path="/ticket-reports" element={<TicketReports />} />
+        <Route path="/pv-reports" element={<PVReports />} />
       </Routes>
     </>
   );
