@@ -233,7 +233,7 @@ const Dashboard = () => {
           <div className="login-container">
             <div className="login-header">
               <i className="fas fa-user-circle user-icon"></i>
-              <h2>Sign innn</h2>
+              <h2>Sign in</h2>
               <h5>Sign in below using your GLPI credentials</h5>
             </div>
             <form onSubmit={handleLogin}>
