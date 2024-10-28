@@ -197,6 +197,7 @@ const Dashboard = () => {
               <div
                 className="action-card"
                 onClick={() => navigate("/pv-reports")}
+                style={{ display: "none" }} // This will hide the element
               >
                 <div className="action-icon">
                   <FontAwesomeIcon icon={faFileAlt} />
