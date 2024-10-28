@@ -12,9 +12,8 @@ import { UserContext } from "./UserContext"; // Import UserContext
 
 const App = () => {
   const location = useLocation();
-  const { username } = useContext(UserContext); // Use username from context
+  const { username } = useContext(UserContext); // Access username from context
 
-  // Conditionally display Menubar only on specific routes
   const showMenubar =
     location.pathname === "/weekly-reports" ||
     location.pathname === "/par-reports" ||
@@ -23,7 +22,6 @@ const App = () => {
 
   return (
     <>
-      {/* Conditionally render the Menubar based on the route */}
       {showMenubar && (
         <Menubar
           profileName={username || "Admin"}
@@ -32,7 +30,6 @@ const App = () => {
       )}
 
       <Routes>
-        {/* Define your routes here */}
         <Route path="/" element={<Dashboard />} />
         <Route path="/weekly-reports" element={<WeeklyReports />} />
         <Route path="/par-reports" element={<PAR />} />

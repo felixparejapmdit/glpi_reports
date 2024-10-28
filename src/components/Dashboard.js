@@ -20,7 +20,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 
 const Dashboard = () => {
-  const { setUsername } = useContext(UserContext); // Destructure setUsername from context
+  const { setUsername } = useContext(UserContext); // Access setUsername to update context
   const [username, setUsernameInput] = useState(""); // Local state for username input
   const [password, setPassword] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -246,9 +246,10 @@ const Dashboard = () => {
                 <input
                   type="text"
                   value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  onChange={(e) => setUsernameInput(e.target.value)}
                   required
                 />
+
                 <label>Username</label>
               </div>
               <div className="form-group">
